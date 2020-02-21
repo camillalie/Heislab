@@ -1,0 +1,146 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXFileReference section */
+		E79A875E23FD563D00860758 /* FSM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FSM.h; path = source/FSM.h; sourceTree = "<group>"; };
+		E79A875F23FD563D00860758 /* FSM.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = FSM.c; path = source/FSM.c; sourceTree = "<group>"; };
+		E7FDE47F23FC36F10012B574 /* Makefile */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
+		E7FDE48023FC36F10012B574 /* source */ = {isa = PBXFileReference; lastKnownFileType = folder; path = source; sourceTree = "<group>"; };
+		E7FDE48A23FD55FF0012B574 /* timer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = timer.h; path = source/timer.h; sourceTree = "<group>"; };
+		E7FDE48B23FD55FF0012B574 /* timer.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = timer.c; path = source/timer.c; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		E7FDE47923FC36F10012B574 = {
+			isa = PBXGroup;
+			children = (
+				E79A875E23FD563D00860758 /* FSM.h */,
+				E79A875F23FD563D00860758 /* FSM.c */,
+				E7FDE48A23FD55FF0012B574 /* timer.h */,
+				E7FDE48B23FD55FF0012B574 /* timer.c */,
+				E7FDE47F23FC36F10012B574 /* Makefile */,
+				E7FDE48023FC36F10012B574 /* source */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		E7FDE47E23FC36F10012B574 /* skeleton_project */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = E7FDE48123FC36F10012B574 /* Build configuration list for PBXLegacyTarget "skeleton_project" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "/Users/hannerygg/Downloads/oppgave(3)/skeleton_project";
+			dependencies = (
+			);
+			name = skeleton_project;
+			passBuildSettingsInEnvironment = 1;
+			productName = skeleton_project;
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXProject section */
+		E7FDE47A23FC36F10012B574 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+			};
+			buildConfigurationList = E7FDE47D23FC36F10012B574 /* Build configuration list for PBXProject "skeleton_project" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = E7FDE47923FC36F10012B574;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E7FDE47E23FC36F10012B574 /* skeleton_project */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		E7FDE47B23FC36F10012B574 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx10.6;
+			};
+			name = Debug;
+		};
+		E7FDE47C23FC36F10012B574 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				COPY_PHASE_STRIP = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				SDKROOT = macosx10.6;
+			};
+			name = Release;
+		};
+		E7FDE48223FC36F10012B574 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				DEBUGGING_SYMBOLS = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = skeleton_project;
+			};
+			name = Debug;
+		};
+		E7FDE48323FC36F10012B574 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				PRODUCT_NAME = skeleton_project;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E7FDE47D23FC36F10012B574 /* Build configuration list for PBXProject "skeleton_project" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E7FDE47B23FC36F10012B574 /* Debug */,
+				E7FDE47C23FC36F10012B574 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E7FDE48123FC36F10012B574 /* Build configuration list for PBXLegacyTarget "skeleton_project" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E7FDE48223FC36F10012B574 /* Debug */,
+				E7FDE48323FC36F10012B574 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E7FDE47A23FC36F10012B574 /* Project object */;
+}
