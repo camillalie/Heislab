@@ -9,7 +9,7 @@ void timer_start(){
 
 int timer_less_than(int sec){
     if(((clock()-start_time)/CLOCKS_PER_SEC) >= sec){
-        return 0;
+        return 1;
     }
-    return 1;
+    return 0;
 }

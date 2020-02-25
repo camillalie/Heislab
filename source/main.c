@@ -12,7 +12,7 @@ typedef enum {
     EMERGENCY,
 } State;
 
-static State current_state = STANDBY;
+static State current_state;
 static int current_floor;
 static HardwareMovement current_direction;
 
@@ -27,15 +27,14 @@ void poll_order(){
     }
 }
 
-int arrive_at_destination(int floor){
-    int temporary_floor = hardware_read_floor_sensor(floor);
-    if (temporary_floor){
-        hardware_command_floor_indicator_on(floor);
-        return 1;
+void poll_floor_sensors(){
+    for(int f = 0; f < HARDWARE_NUMBER_OF_FLOORS; f++){
+        if(hardware_read_floor_sensor(f)){
+            current_floor = f;
+            hardware_command_floor_indicator_on(f);
+        }
     }
-    return 0;   
 }
-
 
 static void clear_all_order_lights(){
     HardwareOrder order_types[3] = {
@@ -70,13 +69,22 @@ int emergency_stop(){
 }
 
 void go_to_first_floor(){
-    while (hardware_read_floor_sensor(0) != 1){ 
-        hardware_command_movement(HARDWARE_MOVEMENT_DOWN)
+    while (hardware_read_floor_sensor(0) == 0){ 
+        hardware_command_movement(HARDWARE_MOVEMENT_DOWN);
     }
     hardware_command_movement(HARDWARE_MOVEMENT_STOP);
     current_floor = 0;
-    current_state = STANDBY;
     current_direction = HARDWARE_MOVEMENT_DOWN;
+    hardware_command_floor_indicator_on(0);
+    timer_start();
+    current_state = OPEN_DOOR;
+    hardware_command_door_open(1);
+}
+
+void turn_off_lights(int floor){
+    for (HardwareOrder f = HARDWARE_ORDER_UP; f <= HARDWARE_ORDER_DOWN; f++){
+        hardware_command_order_light(floor, f, 0);
+    }
 }
 
 
@@ -88,108 +96,109 @@ int main(){
     }
 
     signal(SIGINT, sigint_handler);
+    clear_all_order_lights();
     go_to_first_floor();
     while(1){
         switch (current_state)
         {
         case STANDBY:
-            poll_order();
             if(emergency_stop()){
                 break;
             }
-            if (current_direction == HARDWARE_MOVEMENT_UP){ 
-                if(queue_order_above()){
+            poll_order();
+            if (current_direction == HARDWARE_MOVEMENT_UP){
+                if (queue_order_above(current_floor)){
                     hardware_command_movement(HARDWARE_MOVEMENT_UP);
                     current_state = DRIVING;
                     break;
                 }
-                if(queue_order_below()){
+                if (queue_order_below(current_floor)){
                     hardware_command_movement(HARDWARE_MOVEMENT_DOWN);
                     current_direction = HARDWARE_MOVEMENT_DOWN;
                     current_state = DRIVING;
                     break;
                 }
-            }
-            if (current_direction == HARDWARE_MOVEMENT_DOWN){
-                if(queue_order_below()){
-                    hardware_command_movement(HARDWARE_MOVEMENT_DOWN);
-                    current_state = DRIVING;
-                    break;
                 }
-                if(queue_order_above()){
-                    hardware_command_movement(HARDWARE_MOVEMENT_UP);
-                    current_direction = HARDWARE_MOVEMENT_UP;
-                    current_state = DRIVING;
-                    break;
+                if (current_direction == HARDWARE_MOVEMENT_DOWN){
+                    if(queue_order_below(current_floor)){
+                        hardware_command_movement(HARDWARE_MOVEMENT_DOWN);
+                        current_state = DRIVING;
+                        break;
+                    }
+                    if (queue_order_above(current_floor)) {
+                        hardware_command_movement(HARDWARE_MOVEMENT_UP);
+                        current_state = DRIVING;
+                        current_direction = HARDWARE_MOVEMENT_UP;
+                        break;
+                    }
                 }
-            }
             break;
         case DRIVING:
-            poll_order();
             if(emergency_stop()){
                 break;
             }
-            for (int i = current_floor; i < HARDWARE_NUMBER_OF_FLOORS ; i ++){
-                if (current_direction = HARDWARE_MOVEMENT_UP){
-                    if (queue_order_at(i, HARDWARE_MOVEMENT_UP) && arrive_at_destination(i)){
-                        hardware_command_movement(HARDWARE_MOVEMENT_STOP);
-                        queue_delete_element(i);
-                        hardware_command_order_light(0);
-                        hardware_command_floor_indicator_on(i);
-                        hardware_command_door_open(1);
-                        timer_start();
-                        current_floor = i;
-                        current_state = OPEN_DOOR;
-                        break;
-                    }
-                }
+            poll_order();
+            poll_floor_sensors();
+            if (queue_order_at(current_floor, HARDWARE_MOVEMENT_UP)){
+                hardware_command_movement(HARDWARE_MOVEMENT_STOP);
+                queue_delete_element(current_floor);
+                turn_off_lights(current_floor);
+                hardware_command_door_open(1);
+                timer_start();
+                current_state = OPEN_DOOR;
+                break;
             }
-            for (int i = current_floor; i <= 0; i--){
-                if (current_direction == HARDWARE_MOVEMENT_DOWN){
-                    if (queue_order_at(i,HARDWARE_MOVEMENT_DOWN) && arrive_at_destination(i)){
-                        hardware_command_movement(HARDWARE_MOVEMENT_STOP);
-                        queue_delete_element(i);
-                        hardware_command_order_light(0);
-                        hardware_command_floor_indicator_on(i);
-                        hardware_command_door_open(1);
-                        timer_start();
-                        current_floor = i;
-                        current_state = OPEN_DOOR;
-                        break;
-                    }
-                } 
+            if (queue_order_at(current_floor,HARDWARE_MOVEMENT_DOWN)){
+                hardware_command_movement(HARDWARE_MOVEMENT_STOP);
+                queue_delete_element(current_floor);
+                turn_off_lights(current_floor);
+                hardware_command_door_open(1);
+                timer_start();
+                current_state = OPEN_DOOR;
+                break;
             }
+
             break;
         case OPEN_DOOR:
             poll_order();
             if(emergency_stop()){
                 break;
             }
-            if(hardware_read_obstruction_signal(){
+            if(hardware_read_obstruction_signal()){
                 timer_start();
-                 break; //er denne nødvendig?
+                break;
             }
-             if(timer_less_than(3)){
+            if(timer_less_than(3)){
                 hardware_command_door_open(0);  
                 current_state = STANDBY;
                 break;
             }
             break;
-        case EMERGENCY: // Koffor funker ikkje denne?
+        case EMERGENCY: 
             queue_delete_all();
             for(int f = 0; f<HARDWARE_NUMBER_OF_FLOORS; f++){
                 for(HardwareOrder i = HARDWARE_ORDER_UP; i<= HARDWARE_ORDER_DOWN; i++){
                     hardware_command_order_light(f,i,0);
                 }
             }
+            if(hardware_read_floor_sensor(current_floor)){
+                hardware_command_door_open(1);
+                if (hardware_read_stop_signal()== 0){
+                    timer_start();
+                    current_state = OPEN_DOOR;
+                    hardware_command_stop_light(0);
+                    break;
+                }
+            }          
             if (hardware_read_stop_signal()== 0){
+                hardware_command_door_open(0);
                 current_state = STANDBY;
                 hardware_command_stop_light(0);
                 break;
             }
         break;
-           default:
-            break;
+        default:
+        break;
         }
     }
     return 0;

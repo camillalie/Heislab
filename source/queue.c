@@ -1,5 +1,9 @@
 #include "queue.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <signal.h>
+
 static int order_up[HARDWARE_NUMBER_OF_FLOORS];
 
 static int order_down[HARDWARE_NUMBER_OF_FLOORS];
@@ -17,27 +21,27 @@ void queue_set_order(int floor, HardwareOrder order){
     }
 }
 
-int queue_order_above(int floor, HardwareMovement direction){
-    if (direction == HARDWARE_MOVEMENT_UP){
-        for (int f = floor; f < HARDWARE_NUMBER_OF_FLOORS; f++){
-            if(order_up[f]){
-                return 1;
-            }
+
+int queue_order_above(int floor){
+    for (int f = floor; f < HARDWARE_NUMBER_OF_FLOORS; f++){
+        if (order_up[f] || order_down[f]){
+            return 1;
         }
     }
     return 0;
 }
 
-int queue_order_below(int floor, HardwareMovement direction){
-    if (direction == HARDWARE_MOVEMENT_DOWN){
-        for (int f = floor; f>=0; f--){
-            if (order_down[f]){
-                return 1;
-            }
+int queue_order_below(int floor){
+    for (int f = floor; f>= 0; f--){
+        if (order_up[f] || order_down[f]){
+            return 1;
         }
     }
     return 0;
 }
+
+
+
 
 int queue_order_at(int floor, HardwareMovement direction){
     if (direction == HARDWARE_MOVEMENT_UP){

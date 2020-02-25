@@ -3,3 +3,5 @@
 
 void timer_start();
 int timer_less_than(int sec);
+
+#endif
