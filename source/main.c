@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Finish State Machine, controlling and driving the elevator.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -5,6 +10,9 @@
 #include "queue.h"
 #include "timer.h"
 
+/**
+ * @brief statetype used to tell which state the elevator is in.
+ */
 typedef enum {
     STANDBY,
     DRIVING,
@@ -12,10 +20,24 @@ typedef enum {
     EMERGENCY,
 } State;
 
+/**
+ * @brief tells which state the elevator is in
+ */
 static State current_state;
+
+/**
+ * @brief tells wich floor the elevator is in
+ */
 static int current_floor;
+
+/**
+ * @brief tells which direction the elevator is moving in. 
+ */
 static HardwareMovement current_direction;
 
+/**
+ * @brief adds elements to queue.
+ */
 void poll_order(){
     for(int f = 0; f<HARDWARE_NUMBER_OF_FLOORS; f++){
         for(HardwareOrder i = HARDWARE_ORDER_UP; i<= HARDWARE_ORDER_DOWN; i++){
@@ -27,6 +49,9 @@ void poll_order(){
     }
 }
 
+/** 
+ * @brief updates current_floor and sets orderlight.
+ */
 void poll_floor_sensors(){
     for(int f = 0; f < HARDWARE_NUMBER_OF_FLOORS; f++){
         if(hardware_read_floor_sensor(f)){
@@ -36,6 +61,9 @@ void poll_floor_sensors(){
     }
 }
 
+/**
+ * @brief clear all order lights
+ */
 static void clear_all_order_lights(){
     HardwareOrder order_types[3] = {
         HARDWARE_ORDER_UP,
@@ -58,6 +86,10 @@ static void sigint_handler(int sig){
     exit(0);
 }
 
+/**
+ * @brief what to do when emergency stopp i called. Stops elevator and turn on stoplight,
+ */
+
 int emergency_stop(){
     if(hardware_read_stop_signal()){
         hardware_command_movement(HARDWARE_MOVEMENT_STOP);
@@ -68,6 +100,9 @@ int emergency_stop(){
     return 0;
 }
 
+/** 
+ * @brief goes to first floor
+ */
 void go_to_first_floor(){
     while (hardware_read_floor_sensor(0) == 0){ 
         hardware_command_movement(HARDWARE_MOVEMENT_DOWN);
@@ -81,10 +116,27 @@ void go_to_first_floor(){
     hardware_command_door_open(1);
 }
 
+/**
+ * @brief turns off light at @p floor
+ * @param floor which floor we are in.
+ */
 void turn_off_lights(int floor){
     for (HardwareOrder f = HARDWARE_ORDER_UP; f <= HARDWARE_ORDER_DOWN; f++){
         hardware_command_order_light(floor, f, 0);
     }
+}
+
+/**
+ * @brief what to do when at right @p floor
+ * @param floor which floor we are in.
+ */
+void stop_at_floor(int floor){
+    hardware_command_movement(HARDWARE_MOVEMENT_STOP);
+    queue_delete_element(floor);
+    turn_off_lights(floor);
+    hardware_command_door_open(1);
+    timer_start();
+    current_state = OPEN_DOOR;
 }
 
 
@@ -94,7 +146,6 @@ int main(){
         fprintf(stderr, "Unable to initialize hardware\n");
         exit(1);
     }
-
     signal(SIGINT, sigint_handler);
     clear_all_order_lights();
     go_to_first_floor();
@@ -118,20 +169,20 @@ int main(){
                     current_state = DRIVING;
                     break;
                 }
+            }
+            if (current_direction == HARDWARE_MOVEMENT_DOWN){
+                if(queue_order_below(current_floor)){
+                    hardware_command_movement(HARDWARE_MOVEMENT_DOWN);
+                    current_state = DRIVING;
+                    break;
                 }
-                if (current_direction == HARDWARE_MOVEMENT_DOWN){
-                    if(queue_order_below(current_floor)){
-                        hardware_command_movement(HARDWARE_MOVEMENT_DOWN);
-                        current_state = DRIVING;
-                        break;
-                    }
-                    if (queue_order_above(current_floor)) {
-                        hardware_command_movement(HARDWARE_MOVEMENT_UP);
-                        current_state = DRIVING;
-                        current_direction = HARDWARE_MOVEMENT_UP;
-                        break;
-                    }
+                if (queue_order_above(current_floor)) {
+                    hardware_command_movement(HARDWARE_MOVEMENT_UP);
+                    current_state = DRIVING;
+                    current_direction = HARDWARE_MOVEMENT_UP;
+                    break;
                 }
+            }
             break;
         case DRIVING:
             if(emergency_stop()){
@@ -139,31 +190,20 @@ int main(){
             }
             poll_order();
             poll_floor_sensors();
-            if (queue_order_at(current_floor, HARDWARE_MOVEMENT_UP)){
-                hardware_command_movement(HARDWARE_MOVEMENT_STOP);
-                queue_delete_element(current_floor);
-                turn_off_lights(current_floor);
-                hardware_command_door_open(1);
-                timer_start();
-                current_state = OPEN_DOOR;
+            if (queue_order_at(current_floor, HARDWARE_MOVEMENT_UP) && hardware_read_floor_sensor(current_floor)){
+                stop_at_floor(current_floor);
                 break;
             }
-            if (queue_order_at(current_floor,HARDWARE_MOVEMENT_DOWN)){
-                hardware_command_movement(HARDWARE_MOVEMENT_STOP);
-                queue_delete_element(current_floor);
-                turn_off_lights(current_floor);
-                hardware_command_door_open(1);
-                timer_start();
-                current_state = OPEN_DOOR;
+            if (queue_order_at(current_floor,HARDWARE_MOVEMENT_DOWN) && hardware_read_floor_sensor(current_floor)){
+                stop_at_floor(current_floor);
                 break;
             }
-
             break;
         case OPEN_DOOR:
-            poll_order();
             if(emergency_stop()){
                 break;
             }
+            poll_order();
             if(hardware_read_obstruction_signal()){
                 timer_start();
                 break;
@@ -183,22 +223,22 @@ int main(){
             }
             if(hardware_read_floor_sensor(current_floor)){
                 hardware_command_door_open(1);
-                if (hardware_read_stop_signal()== 0){
+                if (hardware_read_stop_signal() == 0){
                     timer_start();
-                    current_state = OPEN_DOOR;
                     hardware_command_stop_light(0);
+                    current_state = OPEN_DOOR;
                     break;
                 }
             }          
             if (hardware_read_stop_signal()== 0){
                 hardware_command_door_open(0);
-                current_state = STANDBY;
                 hardware_command_stop_light(0);
+                current_state = STANDBY;
                 break;
             }
-        break;
+            break;
         default:
-        break;
+            break;
         }
     }
     return 0;
